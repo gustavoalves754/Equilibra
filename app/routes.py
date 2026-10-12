@@ -1,13 +1,14 @@
-"""Rotas HTTP disponíveis até a Issue 3 do Equilibra."""
+"""Rotas HTTP disponíveis até a Issue 4 do Equilibra."""
 
 from datetime import datetime, timezone
 import sqlite3
 
-from flask import Blueprint, g, jsonify, request
+from flask import Blueprint, current_app, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .auth import create_token, token_required
 from .database import get_app_db, get_auth_db
+from .gemini_service import GeminiServiceError, generate_wellbeing_guidance
 from .validators import validate_credentials, validate_profile
 
 api = Blueprint("api", __name__)
@@ -165,3 +166,40 @@ def get_profile():
         return jsonify({"error": "Perfil ainda não cadastrado."}), 404
 
     return jsonify(dict(profile)), 200
+
+
+@api.post("/guidance")
+@token_required
+def create_guidance():
+    """Usa o perfil autenticado para solicitar uma orientação ao Gemini."""
+    with get_app_db() as db:
+        row = db.execute(
+            """
+            SELECT age, height_m, weight_kg, goal
+            FROM profiles
+            WHERE user_id = ?
+            """,
+            (g.user_id,),
+        ).fetchone()
+
+    if row is None:
+        return jsonify({"error": "Cadastre o perfil antes de gerar orientação."}), 400
+
+    profile = dict(row)
+
+    try:
+        response_text = generate_wellbeing_guidance(
+            profile,
+            api_key=current_app.config["GEMINI_API_KEY"],
+            model=current_app.config["GEMINI_MODEL"],
+        )
+    except GeminiServiceError:
+        return jsonify({"error": "Não foi possível consultar o Gemini agora."}), 503
+
+    return jsonify(
+        {
+            "profile": profile,
+            "guidance": response_text,
+            "model": current_app.config["GEMINI_MODEL"],
+        }
+    ), 200

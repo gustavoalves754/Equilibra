@@ -1,4 +1,4 @@
-"""Fixtures compartilhadas pelos testes até a Issue 3."""
+"""Fixtures compartilhadas pelos testes até a Issue 4."""
 
 import pytest
 
@@ -15,6 +15,8 @@ def app(tmp_path):
             "APP_DB_PATH": str(tmp_path / "equilibra.db"),
             "JWT_SECRET": "equilibra-segredo-exclusivo-testes-32-caracteres",
             "TOKEN_EXP_HOURS": 1,
+            "GEMINI_API_KEY": "chave-gemini-ficticia-para-testes",
+            "GEMINI_MODEL": "modelo-teste",
         }
     )
     yield application
