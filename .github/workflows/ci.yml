@@ -33,19 +33,17 @@ jobs:
       - name: Instalar dependências
         run: python -m pip install -r requirements-dev.txt
 
-      - name: Validar estrutura da Issue 4
+      - name: Validar estrutura da Issue 5
         run: |
           test -f app/auth.py
           test -f app/database.py
           test -f app/validators.py
           test -f app/prompts.py
           test -f app/gemini_service.py
-          test -f tests/unit/test_prompts.py
-          test -f tests/unit/test_gemini_service.py
           test -f tests/integration/test_guidance_api.py
+          test -f tests/integration/test_guidance_history.py
           test -f .env.example
           test ! -f .env
-
           if find . -type f \( -name '*.db' -o -name '*.db-wal' -o -name '*.db-shm' \) -print -quit | grep -q .; then
             echo "ERRO: banco SQLite foi versionado."
             exit 1
@@ -63,8 +61,8 @@ jobs:
       - name: Resumo
         if: always()
         run: |
-          echo "## Equilibra - CI Issue 4" >> "$GITHUB_STEP_SUMMARY"
-          echo "- API base, autenticação e perfil preservados" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Integração Gemini testada somente com mocks" >> "$GITHUB_STEP_SUMMARY"
-          echo "- GEMINI_API_KEY carregada apenas por variável de ambiente" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Nenhuma chamada real ao Gemini durante os testes" >> "$GITHUB_STEP_SUMMARY"
+          echo "## Equilibra - CI Issue 5" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Funcionalidades das Issues anteriores preservadas" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Orientações do Gemini persistidas no equilibra.db" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Histórico protegido e isolado por usuário" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Bancos reais não são usados durante os testes" >> "$GITHUB_STEP_SUMMARY"

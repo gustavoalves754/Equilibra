@@ -1,4 +1,4 @@
-"""Rotas HTTP disponíveis até a Issue 4 do Equilibra."""
+"""Rotas HTTP disponíveis até a Issue 5 do Equilibra."""
 
 from datetime import datetime, timezone
 import sqlite3
@@ -171,7 +171,7 @@ def get_profile():
 @api.post("/guidance")
 @token_required
 def create_guidance():
-    """Usa o perfil autenticado para solicitar uma orientação ao Gemini."""
+    """Chama o Gemini e salva uma cópia da orientação no histórico."""
     with get_app_db() as db:
         row = db.execute(
             """
@@ -196,10 +196,52 @@ def create_guidance():
     except GeminiServiceError:
         return jsonify({"error": "Não foi possível consultar o Gemini agora."}), 503
 
+    with get_app_db() as db:
+        cursor = db.execute(
+            """
+            INSERT INTO guidance_history (
+                user_id, age, height_m, weight_kg, goal,
+                response_text, model, created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                g.user_id,
+                profile["age"],
+                profile["height_m"],
+                profile["weight_kg"],
+                profile["goal"],
+                response_text,
+                current_app.config["GEMINI_MODEL"],
+                _now(),
+            ),
+        )
+        guidance_id = cursor.lastrowid
+
     return jsonify(
         {
+            "id": guidance_id,
             "profile": profile,
             "guidance": response_text,
             "model": current_app.config["GEMINI_MODEL"],
         }
-    ), 200
+    ), 201
+
+
+@api.get("/guidance/history")
+@token_required
+def guidance_history():
+    """Lista somente as orientações geradas pelo usuário autenticado."""
+    with get_app_db() as db:
+        rows = db.execute(
+            """
+            SELECT id, age, height_m, weight_kg, goal,
+                   response_text, model, created_at
+            FROM guidance_history
+            WHERE user_id = ?
+            ORDER BY id DESC
+            """,
+            (g.user_id,),
+        ).fetchall()
+
+    return jsonify([dict(row) for row in rows]), 200
