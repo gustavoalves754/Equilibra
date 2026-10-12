@@ -1,4 +1,4 @@
-"""Rotas HTTP disponíveis até a Issue 2 do Equilibra."""
+"""Rotas HTTP disponíveis até a Issue 3 do Equilibra."""
 
 from datetime import datetime, timezone
 import sqlite3
@@ -7,8 +7,8 @@ from flask import Blueprint, g, jsonify, request
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from .auth import create_token, token_required
-from .database import get_auth_db
-from .validators import validate_credentials
+from .database import get_app_db, get_auth_db
+from .validators import validate_credentials, validate_profile
 
 api = Blueprint("api", __name__)
 
@@ -109,3 +109,59 @@ def me():
         return jsonify({"error": "Usuário não encontrado."}), 404
 
     return jsonify(dict(user)), 200
+
+
+@api.put("/profile")
+@token_required
+def save_profile():
+    """Cria ou atualiza idade, altura, peso e objetivo do usuário."""
+    data = request.get_json(silent=True) or {}
+
+    try:
+        profile = validate_profile(data)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+
+    with get_app_db() as db:
+        db.execute(
+            """
+            INSERT INTO profiles (user_id, age, height_m, weight_kg, goal, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT(user_id) DO UPDATE SET
+                age = excluded.age,
+                height_m = excluded.height_m,
+                weight_kg = excluded.weight_kg,
+                goal = excluded.goal,
+                updated_at = excluded.updated_at
+            """,
+            (
+                g.user_id,
+                profile["age"],
+                profile["height_m"],
+                profile["weight_kg"],
+                profile["goal"],
+                _now(),
+            ),
+        )
+
+    return jsonify({"message": "Perfil salvo com sucesso.", "profile": profile}), 200
+
+
+@api.get("/profile")
+@token_required
+def get_profile():
+    """Consulta o perfil do usuário autenticado."""
+    with get_app_db() as db:
+        profile = db.execute(
+            """
+            SELECT age, height_m, weight_kg, goal, updated_at
+            FROM profiles
+            WHERE user_id = ?
+            """,
+            (g.user_id,),
+        ).fetchone()
+
+    if profile is None:
+        return jsonify({"error": "Perfil ainda não cadastrado."}), 404
+
+    return jsonify(dict(profile)), 200
