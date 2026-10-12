@@ -157,3 +157,36 @@ def test_fact_me_retorna_usuario_autenticado(client, token):
 
     assert response.status_code == 200
     assert response.get_json()["username"] == "aluno"
+
+def test_fact_rota_protegida_com_token_vazio_retorna_401(client):
+    # Arrange / Act
+    response = client.get(
+        "/api/v1/me",
+        headers={"Authorization": "Bearer "},
+    )
+ 
+    # Assert
+    assert response.status_code == 401
+    assert response.get_json()["error"] == "Token de acesso não informado."
+ 
+ 
+def test_fact_rota_protegida_com_subject_invalido_retorna_401(app, client):
+    # Arrange
+    invalid_token = jwt.encode(
+        {
+            "sub": "usuario-invalido",
+            "exp": datetime.now(timezone.utc) + timedelta(hours=1),
+        },
+        app.config["JWT_SECRET"],
+        algorithm="HS256",
+    )
+ 
+    # Act
+    response = client.get(
+        "/api/v1/me",
+        headers={"Authorization": f"Bearer {invalid_token}"},
+    )
+ 
+    # Assert
+    assert response.status_code == 401
+    assert response.get_json()["error"] == "Token inválido ou expirado."
