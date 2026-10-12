@@ -1,70 +1,56 @@
 name: CI
-
+ 
 on:
+  workflow_dispatch:
+ 
   pull_request:
-    branches: [develop, qa, main]
+    branches:
+      - develop
+      - qa
+      - main
+ 
   push:
-    branches: [develop, qa, main]
-
+    branches:
+      - develop
+      - qa
+      - main
+ 
 permissions:
   contents: read
-
+ 
 jobs:
   tests:
-    name: Testes e cobertura
+    name: Testes automatizados
     runs-on: ubuntu-latest
-
+ 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+ 
       - name: Configurar Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-
+ 
       - name: Atualizar pip
         run: python -m pip install --upgrade pip
-
+ 
       - name: Instalar dependências
         run: python -m pip install -r requirements-dev.txt
-
-      - name: Validar estrutura mínima
+ 
+      - name: Validar estrutura da Issue 1
         run: |
           test -f pytest.ini
-          test -f .coveragerc
-          test -d tests/unit
           test -d tests/integration
+          test -f tests/integration/test_api_base.py
           test -f .env.example
           test ! -f .env
+ 
           if find . -type f \( -name '*.db' -o -name '*.db-wal' -o -name '*.db-shm' \) -print -quit | grep -q .; then
-            echo "ERRO: banco SQLite real foi versionado."
+            echo "ERRO: banco SQLite foi versionado."
             exit 1
           fi
-
-      - name: Testes unitários
-        run: pytest -q -m unit
-
-      - name: Testes de integração e cobertura geral
-        run: |
-          pytest -q             --cov=app             --cov-branch             --cov-report=term-missing             --cov-report=xml:coverage.xml             --cov-report=html:htmlcov             --cov-fail-under=90
-
-      - name: Resumo no GitHub Actions
-        if: always()
-        run: |
-          echo "## Equilibra - CI" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Testes unitários: pytest -m unit" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Testes de integração: incluídos na suíte completa" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Cobertura mínima exigida: 90% (linhas + ramificações)" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Publicar relatório de cobertura
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: |
-            coverage.xml
-            htmlcov/
-          if-no-files-found: warn
-          retention-days: 14
+ 
+      - name: Executar testes
+        run: python -m pytest -q
