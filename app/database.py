@@ -1,4 +1,4 @@
-"""Acesso aos dois bancos SQLite usados até a Issue 3."""
+"""Acesso aos dois bancos SQLite usados até a Issue 5."""
 
 from contextlib import contextmanager
 from pathlib import Path
@@ -47,7 +47,7 @@ def get_app_db() -> Iterator[sqlite3.Connection]:
 
 
 def init_databases(app: Flask) -> None:
-    """Cria somente as tabelas necessárias até a Issue 3."""
+    """Cria as tabelas necessárias até a Issue 5."""
     with app.app_context():
         with get_auth_db() as db:
             db.execute(
@@ -72,6 +72,21 @@ def init_databases(app: Flask) -> None:
                     weight_kg REAL NOT NULL,
                     goal TEXT NOT NULL,
                     updated_at TEXT NOT NULL
+                )
+                """
+            )
+            db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS guidance_history (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER NOT NULL,
+                    age INTEGER NOT NULL,
+                    height_m REAL NOT NULL,
+                    weight_kg REAL NOT NULL,
+                    goal TEXT NOT NULL,
+                    response_text TEXT NOT NULL,
+                    model TEXT NOT NULL,
+                    created_at TEXT NOT NULL
                 )
                 """
             )
