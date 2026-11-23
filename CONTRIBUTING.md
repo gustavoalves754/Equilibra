@@ -9,6 +9,7 @@ feature/* -> develop -> qa -> main
 Antes de abrir PR:
 
 ```bash
+cd backend
 python -m pytest -q
 python -m pytest -q --cov=app --cov-branch --cov-report=term-missing --cov-fail-under=90
 git status

@@ -23,6 +23,20 @@ def test_fact_health_retorna_ok(client):
     assert response.get_json() == {"status": "ok"}
 
 
+def test_fact_rota_principal_entrega_frontend(client):
+    response = client.get("/")
+
+    assert response.status_code == 200
+    assert b"Equilibra - Sa\xc3\xbade e Bem-Estar" in response.data
+
+
+def test_fact_backend_entrega_arquivo_estatico_do_frontend(client):
+    response = client.get("/style.css")
+
+    assert response.status_code == 200
+    assert response.mimetype == "text/css"
+
+
 def test_fact_rota_inexistente_retorna_404(client):
     response = client.get("/api/v1/nao-existe")
 
