@@ -30,24 +30,27 @@ def test_fact_chamada_valida_retorna_texto_limpo(profile, monkeypatch):
 
     monkeypatch.setattr("app.gemini_service.genai.Client", FakeClient)
 
-    result = generate_wellbeing_guidance(profile, api_key="fake", model="modelo-x")
+    result = generate_wellbeing_guidance(
+        profile, api_key="fake", models=("modelo-x",)
+    )
 
-    assert result == "orientação simulada"
+    assert result.text == "orientação simulada"
+    assert result.model == "modelo-x"
     assert captured["api_key"] == "fake"
     assert captured["model"] == "modelo-x"
     assert "Objetivo: bem-estar" in captured["contents"]
 
 
 @pytest.mark.parametrize(
-    "api_key,model,expected",
+    "api_key,models,expected",
     [
-        ("", "modelo-x", "GEMINI_API_KEY não configurada"),
-        ("fake", "", "Modelo Gemini não configurado"),
+        ("", ("modelo-x",), "GEMINI_API_KEY não configurada"),
+        ("fake", (), "Nenhum modelo Gemini foi configurado"),
     ],
 )
-def test_inline_data_configuracao_obrigatoria(profile, api_key, model, expected):
+def test_inline_data_configuracao_obrigatoria(profile, api_key, models, expected):
     with pytest.raises(GeminiServiceError, match=expected):
-        generate_wellbeing_guidance(profile, api_key=api_key, model=model)
+        generate_wellbeing_guidance(profile, api_key=api_key, models=models)
 
 
 def test_fact_excecao_do_sdk_vira_erro_controlado(profile, monkeypatch):
@@ -57,8 +60,37 @@ def test_fact_excecao_do_sdk_vira_erro_controlado(profile, monkeypatch):
 
     monkeypatch.setattr("app.gemini_service.genai.Client", BrokenClient)
 
-    with pytest.raises(GeminiServiceError, match="Falha ao comunicar"):
-        generate_wellbeing_guidance(profile, api_key="fake", model="modelo-x")
+    with pytest.raises(GeminiServiceError, match="Falha ao iniciar"):
+        generate_wellbeing_guidance(
+            profile, api_key="fake", models=("modelo-x",)
+        )
+
+
+def test_fact_falha_no_primeiro_modelo_usa_o_proximo(profile, monkeypatch):
+    attempted_models = []
+
+    class FakeModels:
+        def generate_content(self, *, model, contents):
+            attempted_models.append(model)
+            if model == "modelo-indisponivel":
+                raise RuntimeError("503 temporário")
+            return SimpleNamespace(text="orientação pelo fallback")
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.models = FakeModels()
+
+    monkeypatch.setattr("app.gemini_service.genai.Client", FakeClient)
+
+    result = generate_wellbeing_guidance(
+        profile,
+        api_key="fake",
+        models=("modelo-indisponivel", "modelo-fallback", "modelo-reserva"),
+    )
+
+    assert attempted_models == ["modelo-indisponivel", "modelo-fallback"]
+    assert result.text == "orientação pelo fallback"
+    assert result.model == "modelo-fallback"
 
 
 @pytest.mark.parametrize("invalid_text", [None, "", "   ", 123])
@@ -75,5 +107,31 @@ def test_inline_data_resposta_vazia_ou_invalida_e_rejeitada(
 
     monkeypatch.setattr("app.gemini_service.genai.Client", FakeClient)
 
-    with pytest.raises(GeminiServiceError, match="resposta vazia ou inválida"):
-        generate_wellbeing_guidance(profile, api_key="fake", model="modelo-x")
+    with pytest.raises(GeminiServiceError, match="nenhum dos modelos"):
+        generate_wellbeing_guidance(
+            profile, api_key="fake", models=("modelo-x",)
+        )
+
+
+def test_fact_todos_os_modelos_sao_tentados_antes_do_erro(profile, monkeypatch):
+    attempted_models = []
+
+    class FakeModels:
+        def generate_content(self, *, model, contents):
+            attempted_models.append(model)
+            raise RuntimeError(f"falha em {model}")
+
+    class FakeClient:
+        def __init__(self, api_key):
+            self.models = FakeModels()
+
+    monkeypatch.setattr("app.gemini_service.genai.Client", FakeClient)
+
+    with pytest.raises(GeminiServiceError, match="nenhum dos modelos"):
+        generate_wellbeing_guidance(
+            profile,
+            api_key="fake",
+            models=("modelo-a", "modelo-b", "modelo-c"),
+        )
+
+    assert attempted_models == ["modelo-a", "modelo-b", "modelo-c"]

@@ -24,4 +24,14 @@ class Config:
     TOKEN_EXP_HOURS = int(os.getenv("TOKEN_EXP_HOURS", "8"))
 
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+    GEMINI_MODELS = tuple(
+        model.strip()
+        for model in os.getenv(
+            "GEMINI_MODELS",
+            os.getenv(
+                "GEMINI_MODEL",
+                "gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite",
+            ),
+        ).split(",")
+        if model.strip()
+    )

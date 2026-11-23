@@ -16,7 +16,7 @@ def app(tmp_path):
             "JWT_SECRET": "equilibra-segredo-exclusivo-testes-32-caracteres",
             "TOKEN_EXP_HOURS": 1,
             "GEMINI_API_KEY": "chave-gemini-ficticia-para-testes",
-            "GEMINI_MODEL": "modelo-teste",
+            "GEMINI_MODELS": ("modelo-teste",),
         }
     )
     yield application
