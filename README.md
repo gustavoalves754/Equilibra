@@ -57,7 +57,7 @@ Preencha as variáveis necessárias no arquivo criado:
 JWT_SECRET=coloque-uma-chave-com-pelo-menos-32-caracteres
 TOKEN_EXP_HOURS=8
 GEMINI_API_KEY=COLE_SUA_CHAVE_REAL_AQUI
-GEMINI_MODEL=gemini-3.8-flash
+GEMINI_MODELS=gemini-3.8-flash,gemini-3.6-flash,gemini-3.5-flash-lite
 AUTH_DB_PATH=data/users.db
 APP_DB_PATH=data/equilibra.db
 ```

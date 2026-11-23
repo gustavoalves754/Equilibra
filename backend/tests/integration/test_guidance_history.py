@@ -2,6 +2,8 @@
 
 import pytest
 
+from app.gemini_service import GeminiGuidance
+
 pytestmark = pytest.mark.integration
 
 
@@ -37,7 +39,9 @@ def test_fact_historico_lista_orientacoes_mais_recentes_primeiro(
     responses = iter(["Primeira orientação", "Segunda orientação"])
     monkeypatch.setattr(
         "app.routes.generate_wellbeing_guidance",
-        lambda profile, api_key, model: next(responses),
+        lambda profile, api_key, models: GeminiGuidance(
+            next(responses), "modelo-teste"
+        ),
     )
 
     client.post("/api/v1/guidance", headers=auth_headers)
@@ -57,7 +61,9 @@ def test_fact_historico_preserva_snapshot_do_perfil(
 ):
     monkeypatch.setattr(
         "app.routes.generate_wellbeing_guidance",
-        lambda profile, api_key, model: "Orientação antiga",
+        lambda profile, api_key, models: GeminiGuidance(
+            "Orientação antiga", "modelo-teste"
+        ),
     )
 
     client.put("/api/v1/profile", headers=auth_headers, json=valid_profile)
@@ -82,7 +88,9 @@ def test_fact_historico_e_isolado_por_usuario(client, valid_profile, monkeypatch
 
     monkeypatch.setattr(
         "app.routes.generate_wellbeing_guidance",
-        lambda profile, api_key, model: "Orientação do usuário A",
+        lambda profile, api_key, models: GeminiGuidance(
+            "Orientação do usuário A", "modelo-teste"
+        ),
     )
 
     client.put("/api/v1/profile", headers=headers_a, json=valid_profile)
