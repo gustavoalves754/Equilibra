@@ -188,10 +188,10 @@ def create_guidance():
     profile = dict(row)
 
     try:
-        response_text = generate_wellbeing_guidance(
+        guidance = generate_wellbeing_guidance(
             profile,
             api_key=current_app.config["GEMINI_API_KEY"],
-            model=current_app.config["GEMINI_MODEL"],
+            models=current_app.config["GEMINI_MODELS"],
         )
     except GeminiServiceError:
         return jsonify({"error": "Não foi possível consultar o Gemini agora."}), 503
@@ -211,8 +211,8 @@ def create_guidance():
                 profile["height_m"],
                 profile["weight_kg"],
                 profile["goal"],
-                response_text,
-                current_app.config["GEMINI_MODEL"],
+                guidance.text,
+                guidance.model,
                 _now(),
             ),
         )
@@ -222,8 +222,8 @@ def create_guidance():
         {
             "id": guidance_id,
             "profile": profile,
-            "guidance": response_text,
-            "model": current_app.config["GEMINI_MODEL"],
+            "guidance": guidance.text,
+            "model": guidance.model,
         }
     ), 201
 

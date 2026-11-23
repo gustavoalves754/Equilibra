@@ -3,7 +3,7 @@
 import pytest
 
 from app.database import get_app_db
-from app.gemini_service import GeminiServiceError
+from app.gemini_service import GeminiGuidance, GeminiServiceError
 
 pytestmark = pytest.mark.integration
 
@@ -24,7 +24,7 @@ def test_fact_falha_do_gemini_retorna_503(
 ):
     client.put("/api/v1/profile", headers=auth_headers, json=valid_profile)
 
-    def fake_failure(profile, api_key, model):
+    def fake_failure(profile, api_key, models):
         raise GeminiServiceError("falha simulada")
 
     monkeypatch.setattr("app.routes.generate_wellbeing_guidance", fake_failure)
@@ -39,7 +39,7 @@ def test_fact_falha_do_gemini_nao_salva_historico(
 ):
     client.put("/api/v1/profile", headers=auth_headers, json=valid_profile)
 
-    def fake_failure(profile, api_key, model):
+    def fake_failure(profile, api_key, models):
         raise GeminiServiceError("falha simulada")
 
     monkeypatch.setattr("app.routes.generate_wellbeing_guidance", fake_failure)
@@ -58,7 +58,9 @@ def test_fact_guidance_sucesso_salva_e_devolve_id(
     client.put("/api/v1/profile", headers=auth_headers, json=valid_profile)
     monkeypatch.setattr(
         "app.routes.generate_wellbeing_guidance",
-        lambda profile, api_key, model: "Resposta simulada do Gemini.",
+        lambda profile, api_key, models: GeminiGuidance(
+            "Resposta simulada do Gemini.", "modelo-teste"
+        ),
     )
 
     response = client.post("/api/v1/guidance", headers=auth_headers)
