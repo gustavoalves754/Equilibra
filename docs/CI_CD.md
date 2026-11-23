@@ -34,7 +34,7 @@ O CD é executado somente depois de uma CI concluída com sucesso na `main`.
 
 Ele:
 
-1. cria a imagem do `Dockerfile`;
+1. cria a imagem usando `backend/Dockerfile`;
 2. publica no GHCR;
 3. publica as tags `latest` e `sha-XXXXXXX`.
 

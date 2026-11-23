@@ -4,12 +4,18 @@
 
 - Fact equivalente: teste simples para um comportamento único.
 - InlineData equivalente: `pytest.mark.parametrize` com dados diretamente no teste.
-- MemberData equivalente: conjuntos reutilizáveis definidos em membros de classe em `tests/data_providers.py`.
+- MemberData equivalente: conjuntos reutilizáveis definidos em membros de classe em `backend/tests/data_providers.py`.
 - ClassData equivalente: classe separada fornecendo cenários completos reutilizáveis.
 
 Não são recursos idênticos do xUnit; são adaptações dos mesmos conceitos para pytest.
 
 ## Executar
+
+Entre uma vez na pasta do backend:
+
+```bash
+cd backend
+```
 
 Todos:
 

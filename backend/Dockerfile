@@ -3,15 +3,17 @@ FROM python:3.12-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     AUTH_DB_PATH=/app/data/users.db \
-    APP_DB_PATH=/app/data/equilibra.db
+    APP_DB_PATH=/app/data/equilibra.db \
+    FRONTEND_DIR=/app/frontend
 
 WORKDIR /app
 
-COPY requirements.txt ./requirements.txt
+COPY backend/requirements.txt ./requirements.txt
 RUN python -m pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY wsgi.py ./wsgi.py
+COPY backend/app ./app
+COPY backend/wsgi.py ./wsgi.py
+COPY frontend ./frontend
 
 RUN mkdir -p /app/data \
     && useradd --create-home --uid 10001 equilibra \

@@ -14,6 +14,7 @@ venv/
 .env
 .env.*
 !.env.example
+!backend/.env.example
 
 # Bancos SQLite locais
 *.db

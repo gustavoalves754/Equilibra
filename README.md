@@ -1,6 +1,28 @@
 # 🥗 Equilibra
 
-Backend acadêmico em Python para a disciplina de Gestão e Qualidade de Software (GQS), relacionado à ODS 3 — Saúde e Bem-Estar.
+Aplicação acadêmica da disciplina de Gestão e Qualidade de Software (GQS), relacionada à ODS 3 — Saúde e Bem-Estar.
+
+O projeto está organizado como um monorepositório com frontend e backend separados:
+
+```text
+Equilibra/
+├── backend/
+│   ├── app/                  # API Flask
+│   ├── tests/                # testes unitários e de integração
+│   ├── data/                 # bancos SQLite locais (não versionados)
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── requirements-dev.txt
+│   ├── run.py
+│   └── wsgi.py
+├── frontend/
+│   ├── js/
+│   ├── index.html
+│   └── style.css
+├── deploy/
+├── docs/
+└── .github/workflows/
+```
 
 ## Fluxo principal
 
@@ -12,23 +34,24 @@ Cadastro -> Login/JWT -> Perfil -> Gemini -> Histórico
 
 - Python 3.12
 - Flask
+- HTML, CSS e JavaScript
 - SQLite (`users.db` e `equilibra.db` separados)
 - PyJWT
-- google-genai
+- Google Gen AI
 - pytest / pytest-cov
 - GitHub Actions
 - Docker + Gunicorn
 
-## Regras de perfil
-
-- idade entre 0 e 120;
-- altura entre 1,00 e 2,60 m;
-- peso > 1 kg e <= 500 kg;
-- objetivo obrigatório, até 200 caracteres.
-
 ## Configuração local
 
-Crie `.env` na raiz a partir de `.env.example`:
+Entre na pasta do backend e crie o arquivo `.env` a partir do exemplo:
+
+```powershell
+cd backend
+Copy-Item .env.example .env
+```
+
+Preencha as variáveis necessárias no arquivo criado:
 
 ```env
 JWT_SECRET=coloque-uma-chave-com-pelo-menos-32-caracteres
@@ -39,36 +62,38 @@ AUTH_DB_PATH=data/users.db
 APP_DB_PATH=data/equilibra.db
 ```
 
-O `.env` não deve ser versionado.
+O `.env` e os bancos SQLite locais não devem ser versionados.
 
 ## Instalação
 
-```bash
-python -m venv .venv
-python -m pip install -r requirements-dev.txt
-```
-
-No Windows PowerShell, ative com:
+Execute os comandos dentro de `backend/`:
 
 ```powershell
+python -m venv .venv
 .\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements-dev.txt
 ```
 
 ## Executar localmente
 
-```bash
+Ainda dentro de `backend/`:
+
+```powershell
 python run.py
 ```
 
-Health check:
+A aplicação completa fica disponível em:
 
 ```text
-GET /api/v1/health
+http://127.0.0.1:5000
 ```
+
+O Flask entrega o frontend da pasta `frontend/` e mantém a API em `/api/v1`.
 
 ## Rotas principais
 
 ```text
+GET  /api/v1/health
 POST /api/v1/auth/register
 POST /api/v1/auth/login
 GET  /api/v1/me
@@ -80,7 +105,9 @@ GET  /api/v1/guidance/history
 
 ## Testes
 
-```bash
+Na pasta `backend/`:
+
+```powershell
 python -m pytest -q
 python -m pytest -q -m unit
 python -m pytest -q -m integration
@@ -89,12 +116,16 @@ python -m pytest -q --cov=app --cov-branch --cov-report=term-missing --cov-fail-
 
 Os testes não fazem chamadas reais ao Gemini e usam bancos SQLite temporários.
 
+## Branches principais
+
+- `develop`: desenvolvimento e integração das alterações;
+- `qa`: validação e homologação;
+- `main`: versão estável.
+
 ## CI/CD
 
-A CI executa em PRs/pushes para `develop`, `qa` e `main`, exigindo cobertura mínima de 90%.
+A CI executa em pushes e pull requests para `develop`, `qa` e `main`, com cobertura mínima de 90%.
 
-Após uma CI verde na `main`, o CD cria a imagem Docker e publica no GitHub Container Registry (GHCR).
+Após uma CI verde na `main`, o CD cria a imagem usando `backend/Dockerfile` e publica no GitHub Container Registry. A implantação em servidor continua opcional.
 
-A implantação em servidor é opcional e só ocorre quando `DEPLOY_ENABLED=true` e os secrets do servidor estiverem configurados.
-
-Detalhes em `docs/CI_CD.md`.
+Mais detalhes em [docs/CI_CD.md](docs/CI_CD.md).

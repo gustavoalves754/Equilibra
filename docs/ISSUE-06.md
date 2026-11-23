@@ -11,7 +11,7 @@ Finalizar o backend do Equilibra com CI de cobertura mínima, empacotamento Dock
 - cobertura de linhas e branches >= 90%;
 - relatório de cobertura como artefato;
 - Gunicorn para execução no container;
-- Dockerfile e `.dockerignore`;
+- `backend/Dockerfile` e `backend/Dockerfile.dockerignore`;
 - CD após CI verde na `main`;
 - publicação no GHCR com `latest` e `sha-*`;
 - deploy em servidor opcional;
